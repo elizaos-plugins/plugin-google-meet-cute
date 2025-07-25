@@ -13,7 +13,7 @@ A Google Meet integration plugin for ElizaOS that enables agents to join meeting
 ## Installation
 
 ```bash
-npm install @elizaos/plugin-google-meet-cute
+bun install @elizaos/plugin-google-meet-cute
 ```
 
 ## Prerequisites
@@ -46,11 +46,11 @@ AUDIO_CHUNK_DURATION_MS=30000  # 30 seconds chunks for Whisper
 ### Adding the Plugin
 
 ```typescript
-import { googleMeetPlugin } from '@elizaos/plugin-google-meet-cute';
-
 // In your agent configuration
 const agent = {
-  plugins: [googleMeetPlugin],
+  plugins: [
+    "@elizaos/plugin-google-meet-cute"
+  ],
   // ... other configuration
 };
 ```
@@ -130,13 +130,13 @@ The plugin generates reports in the following format:
 ### Building
 
 ```bash
-npm run build
+bun run build
 ```
 
 ### Testing
 
 ```bash
-npm test
+bun test
 ```
 
 ### Running Locally
