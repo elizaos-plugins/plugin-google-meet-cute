@@ -9,19 +9,19 @@ export const meetingProvider: Provider = {
     try {
       const meetService = runtime.getService<GoogleMeetService>('google-meet');
       if (!meetService) {
-        return '';
+        return { text: '' };
       }
       
       const currentMeeting = meetService.getCurrentMeeting();
       if (!currentMeeting) {
-        return 'Not currently in a Google Meet meeting.';
+        return { text: 'Not currently in a Google Meet meeting.' };
       }
       
       const duration = Math.round((Date.now() - currentMeeting.startTime.getTime()) / 60000);
       const transcriptCount = currentMeeting.transcripts.length;
       const participantCount = currentMeeting.participants.length;
       
-      return `Currently in Google Meet:
+      const text = `Currently in Google Meet:
 - Meeting ID: ${currentMeeting.id}
 - URL: ${currentMeeting.url}
 - Status: ${currentMeeting.status}
@@ -29,9 +29,11 @@ export const meetingProvider: Provider = {
 - Participants: ${participantCount}
 - Transcripts collected: ${transcriptCount}`;
       
+      return { text };
+      
     } catch (error) {
       logger.error('Error in meeting provider:', error);
-      return '';
+      return { text: '' };
     }
   },
 }; 

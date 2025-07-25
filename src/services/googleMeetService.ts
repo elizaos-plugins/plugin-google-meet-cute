@@ -18,7 +18,7 @@ export class GoogleMeetService extends Service {
     isRecording: false,
   };
   
-  private meetConfig: GoogleMeetConfig;
+  private meetConfig!: GoogleMeetConfig; // Will be initialized in initialize()
   private meetings: Map<string, Meeting> = new Map();
   private audioBuffer: Buffer[] = [];
   private audioChunkTimer?: NodeJS.Timeout;
@@ -390,6 +390,4 @@ export class GoogleMeetService extends Service {
       logger.error('Error processing audio chunk:', error);
     }
   }
-  
-  private runtime?: IAgentRuntime;
 } 
