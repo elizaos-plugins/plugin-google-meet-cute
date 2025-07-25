@@ -1,0 +1,37 @@
+import { Provider, IAgentRuntime, Memory, State, logger } from '@elizaos/core';
+import { GoogleMeetService } from '../services/googleMeetService';
+
+export const meetingProvider: Provider = {
+  name: 'google-meet-meeting',
+  description: 'Provides current Google Meet meeting context and status',
+  
+  get: async (runtime: IAgentRuntime, message: Memory, state: State) => {
+    try {
+      const meetService = runtime.getService<GoogleMeetService>('google-meet');
+      if (!meetService) {
+        return '';
+      }
+      
+      const currentMeeting = meetService.getCurrentMeeting();
+      if (!currentMeeting) {
+        return 'Not currently in a Google Meet meeting.';
+      }
+      
+      const duration = Math.round((Date.now() - currentMeeting.startTime.getTime()) / 60000);
+      const transcriptCount = currentMeeting.transcripts.length;
+      const participantCount = currentMeeting.participants.length;
+      
+      return `Currently in Google Meet:
+- Meeting ID: ${currentMeeting.id}
+- URL: ${currentMeeting.url}
+- Status: ${currentMeeting.status}
+- Duration: ${duration} minutes
+- Participants: ${participantCount}
+- Transcripts collected: ${transcriptCount}`;
+      
+    } catch (error) {
+      logger.error('Error in meeting provider:', error);
+      return '';
+    }
+  },
+}; 
