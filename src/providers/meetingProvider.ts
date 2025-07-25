@@ -1,26 +1,28 @@
-import { Provider, IAgentRuntime, Memory, State, logger } from '@elizaos/core';
-import { GoogleMeetService } from '../services/googleMeetService';
+import { Provider, IAgentRuntime, Memory, State, logger } from "@elizaos/core";
+import { GoogleMeetService } from "../services/googleMeetService";
 
 export const meetingProvider: Provider = {
-  name: 'google-meet-meeting',
-  description: 'Provides current Google Meet meeting context and status',
-  
+  name: "google-meet-meeting",
+  description: "Provides current Google Meet meeting context and status",
+
   get: async (runtime: IAgentRuntime, message: Memory, state: State) => {
     try {
-      const meetService = runtime.getService<GoogleMeetService>('google-meet');
+      const meetService = runtime.getService<GoogleMeetService>("google-meet");
       if (!meetService) {
-        return { text: '' };
+        return { text: "" };
       }
-      
+
       const currentMeeting = meetService.getCurrentMeeting();
       if (!currentMeeting) {
-        return { text: 'Not currently in a Google Meet meeting.' };
+        return { text: "Not currently in a Google Meet meeting." };
       }
-      
-      const duration = Math.round((Date.now() - currentMeeting.startTime.getTime()) / 60000);
+
+      const duration = Math.round(
+        (Date.now() - currentMeeting.startTime.getTime()) / 60000,
+      );
       const transcriptCount = currentMeeting.transcripts.length;
       const participantCount = currentMeeting.participants.length;
-      
+
       const text = `Currently in Google Meet:
 - Meeting ID: ${currentMeeting.id}
 - URL: ${currentMeeting.url}
@@ -28,12 +30,11 @@ export const meetingProvider: Provider = {
 - Duration: ${duration} minutes
 - Participants: ${participantCount}
 - Transcripts collected: ${transcriptCount}`;
-      
+
       return { text };
-      
     } catch (error) {
-      logger.error('Error in meeting provider:', error);
-      return { text: '' };
+      logger.error("Error in meeting provider:", error);
+      return { text: "" };
     }
   },
-}; 
+};

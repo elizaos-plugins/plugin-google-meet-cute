@@ -1,12 +1,12 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 // Configuration schema
 export const googleMeetConfigSchema = z.object({
   GOOGLE_MEET_EMAIL: z.string().email(),
   GOOGLE_MEET_PASSWORD: z.string().optional(),
-  DEFAULT_MEETING_NAME: z.string().default('ElizaOS Bot'),
-  TRANSCRIPTION_LANGUAGE: z.string().default('en'),
-  REPORT_OUTPUT_DIR: z.string().default('./meeting-reports'),
+  DEFAULT_MEETING_NAME: z.string().default("ElizaOS Bot"),
+  TRANSCRIPTION_LANGUAGE: z.string().default("en"),
+  REPORT_OUTPUT_DIR: z.string().default("./meeting-reports"),
   ENABLE_REAL_TIME_TRANSCRIPTION: z.boolean().default(true),
   AUDIO_CHUNK_DURATION_MS: z.number().default(30000), // 30 seconds chunks for Whisper
 });
@@ -42,7 +42,7 @@ export interface Transcript {
   confidence: number;
 }
 
-export type MeetingStatus = 'waiting' | 'joined' | 'active' | 'ended' | 'error';
+export type MeetingStatus = "waiting" | "joined" | "active" | "ended" | "error";
 
 // Audio streaming types
 export interface AudioChunk {
@@ -68,7 +68,7 @@ export interface ActionItem {
   description: string;
   assignee?: string;
   dueDate?: Date;
-  priority: 'low' | 'medium' | 'high';
+  priority: "low" | "medium" | "high";
 }
 
 // Service state
@@ -89,4 +89,4 @@ export interface GenerateReportParams {
   meetingId: string;
   includeSummary?: boolean;
   includeActionItems?: boolean;
-} 
+}
