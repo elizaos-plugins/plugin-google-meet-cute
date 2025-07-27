@@ -7,8 +7,12 @@ export const googleMeetConfigSchema = z.object({
   DEFAULT_MEETING_NAME: z.string().default("ElizaOS Bot"),
   TRANSCRIPTION_LANGUAGE: z.string().default("en"),
   REPORT_OUTPUT_DIR: z.string().default("./meeting-reports"),
-  ENABLE_REAL_TIME_TRANSCRIPTION: z.boolean().default(true),
-  AUDIO_CHUNK_DURATION_MS: z.number().default(30000), // 30 seconds chunks for Whisper
+  ENABLE_REAL_TIME_TRANSCRIPTION: z.union([z.boolean(), z.string()]).transform(val => 
+    typeof val === 'string' ? val === 'true' : val
+  ).default(true),
+  AUDIO_CHUNK_DURATION_MS: z.union([z.number(), z.string()]).transform(val => 
+    typeof val === 'string' ? parseInt(val, 10) : val
+  ).default(30000), // 30 seconds chunks for Whisper
 });
 
 export type GoogleMeetConfig = z.infer<typeof googleMeetConfigSchema>;

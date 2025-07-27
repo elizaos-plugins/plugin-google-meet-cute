@@ -28,8 +28,20 @@ export class GoogleMeetService extends Service {
     super();
   }
 
+  // Static factory method that the runtime calls during service registration
+  static async start(runtime: IAgentRuntime): Promise<GoogleMeetService> {
+    const instance = new GoogleMeetService();
+    await instance.initialize(runtime);
+    return instance;
+  }
+
   get capabilityDescription(): string {
     return "Google Meet integration service for joining meetings, capturing audio, and generating transcripts";
+  }
+
+  async start(): Promise<void> {
+    logger.info("Google Meet service started");
+    // Service is ready to use - no background processes needed
   }
 
   async stop(): Promise<void> {
