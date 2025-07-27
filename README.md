@@ -2,6 +2,8 @@
 
 A Google Meet integration plugin for ElizaOS that enables agents to join meetings, transcribe audio in real-time using OpenAI Whisper, and generate comprehensive meeting reports.
 
+<img width="1536" height="1024" alt="ChatGPT_Image_Jul_24_2025_10_27_43_AM" src="https://github.com/user-attachments/assets/61a54bbd-9b56-4bfb-8565-9c49dc5e5fc1" />
+
 ## Features
 
 - 🎥 **Join Google Meet meetings** - Automatically join meetings via URL
