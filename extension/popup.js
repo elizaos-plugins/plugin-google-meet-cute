@@ -50,19 +50,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     switch (status) {
       case 'connected':
-        statusText.textContent = 'Connected to ElizaOS';
+        statusText.textContent = 'CONNECTED';
         connectBtn.style.display = 'none';
         disconnectBtn.style.display = 'block';
         break;
         
       case 'disconnected':
-        statusText.textContent = 'Disconnected';
+        statusText.textContent = 'DISCONNECTED';
         connectBtn.style.display = 'block';
         disconnectBtn.style.display = 'none';
         break;
         
       case 'error':
-        statusText.textContent = 'Connection Error';
+        statusText.textContent = 'CONNECTION ERROR';
         connectBtn.style.display = 'block';
         disconnectBtn.style.display = 'none';
         break;

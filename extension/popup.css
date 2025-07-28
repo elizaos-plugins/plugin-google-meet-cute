@@ -1,0 +1,357 @@
+/* ElizaOS Brand Colors */
+:root {
+  --eliza-black: #000000;
+  --eliza-dream-blue: #0B35F1;
+  --eliza-build-orange: #FF5800;
+  --eliza-white: #FFFFFF;
+  --eliza-grey-contrast: #D1D0D4;
+  
+  /* Dark mode surfaces */
+  --surface-primary: #0A0A0A;
+  --surface-secondary: #1A1A1A;
+  --surface-tertiary: #242424;
+  
+  /* Text colors */
+  --text-primary: #FFFFFF;
+  --text-secondary: #D1D0D4;
+  --text-tertiary: #8A8A8E;
+  
+  /* Border colors */
+  --border-primary: #2A2A2A;
+  --border-secondary: #3A3A3A;
+}
+
+/* Typography - Neue Haas Grotesk fallback to system fonts */
+@font-face {
+  font-family: 'Neue Haas Grotesk';
+  src: local('Neue Haas Grotesk'), local('Helvetica Neue'), local('Helvetica'), local('Arial');
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: 'Neue Haas Grotesk';
+  src: local('Neue Haas Grotesk Medium'), local('Helvetica Neue Medium'), local('Helvetica');
+  font-weight: 500;
+}
+
+@font-face {
+  font-family: 'Neue Haas Grotesk';
+  src: local('Neue Haas Grotesk Bold'), local('Helvetica Neue Bold'), local('Helvetica Bold');
+  font-weight: 600;
+}
+
+/* Tronica Mono fallback */
+@font-face {
+  font-family: 'Tronica Mono';
+  src: local('Tronica Mono'), local('SF Mono'), local('Monaco'), local('Consolas'), local('monospace');
+}
+
+body {
+  width: 360px;
+  padding: 0;
+  margin: 0;
+  font-family: 'Neue Haas Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--surface-primary);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+  overflow: hidden;
+}
+
+.container {
+  padding: 20px;
+}
+
+/* Header with logo */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border-primary);
+  background: var(--eliza-black);
+}
+
+.logo {
+  height: 28px;
+  width: auto;
+  filter: brightness(0) invert(1); /* Ensure pure white */
+}
+
+/* Status section */
+.status {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--surface-secondary);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border-primary);
+  transition: all 0.3s ease;
+}
+
+.status:hover {
+  border-color: var(--border-secondary);
+}
+
+.status-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 12px;
+  transition: all 0.3s ease;
+}
+
+.status-indicator.connected {
+  background: var(--eliza-dream-blue);
+  box-shadow: 0 0 12px rgba(11, 53, 241, 0.6);
+}
+
+.status-indicator.disconnected {
+  background: var(--text-tertiary);
+}
+
+.status-indicator.error {
+  background: var(--eliza-build-orange);
+  box-shadow: 0 0 12px rgba(255, 88, 0, 0.6);
+}
+
+.status-text {
+  font-family: 'Tronica Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* Connection settings */
+.connection-settings {
+  background: var(--surface-secondary);
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border-primary);
+}
+
+.input-group {
+  margin-bottom: 14px;
+}
+
+.input-group:last-child {
+  margin-bottom: 0;
+}
+
+label {
+  display: block;
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  font-family: 'Tronica Mono', monospace;
+}
+
+input[type="text"] {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--surface-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--text-primary);
+  box-sizing: border-box;
+  font-family: 'Neue Haas Grotesk', sans-serif;
+  transition: all 0.2s ease;
+}
+
+input[type="text"]:focus {
+  outline: none;
+  border-color: var(--eliza-dream-blue);
+  box-shadow: 0 0 0 3px rgba(11, 53, 241, 0.2);
+}
+
+input[type="text"]::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* Buttons */
+.button-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+button {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Neue Haas Grotesk', sans-serif;
+  letter-spacing: 0.3px;
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+.btn-primary {
+  background: var(--eliza-dream-blue);
+  color: var(--eliza-white);
+}
+
+.btn-primary:hover {
+  background: #0A2FD9;
+  box-shadow: 0 4px 12px rgba(11, 53, 241, 0.3);
+}
+
+.btn-secondary {
+  background: var(--surface-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-secondary);
+}
+
+.btn-secondary:hover {
+  background: var(--border-primary);
+  border-color: var(--border-secondary);
+}
+
+/* Meeting info */
+.meeting-info {
+  background: var(--surface-secondary);
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border-primary);
+  margin-bottom: 16px;
+}
+
+.meeting-info h3 {
+  margin: 0 0 12px 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-family: 'Tronica Mono', monospace;
+  font-weight: 500;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.info-item:last-child {
+  margin-bottom: 0;
+}
+
+.info-label {
+  color: var(--text-tertiary);
+  font-family: 'Tronica Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.3px;
+}
+
+.info-value {
+  color: var(--text-primary);
+  font-weight: 500;
+  font-family: 'Neue Haas Grotesk', sans-serif;
+}
+
+/* Features */
+.features {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.feature {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--surface-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.feature:hover {
+  border-color: var(--border-secondary);
+  background: var(--surface-tertiary);
+}
+
+.feature input[type="checkbox"] {
+  margin-right: 12px;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--eliza-dream-blue);
+  cursor: pointer;
+}
+
+/* Footer */
+.footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-primary);
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  background: var(--surface-primary);
+}
+
+.footer a {
+  color: var(--eliza-build-orange);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.footer a:hover {
+  color: var(--eliza-white);
+  text-decoration: none;
+}
+
+/* Animations */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(11, 53, 241, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(11, 53, 241, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(11, 53, 241, 0);
+  }
+}
+
+.status-indicator.connected {
+  animation: pulse 2s infinite;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-secondary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+} 
