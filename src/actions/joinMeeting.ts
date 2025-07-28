@@ -6,7 +6,7 @@ import {
   ModelType,
 } from "@elizaos/core";
 import { z } from "zod";
-import { GoogleMeetService } from "../services/googleMeetService";
+import { ExtensionMeetService } from "../services/extensionMeetService";
 import { JoinMeetingParams } from "../types";
 
 const joinMeetingSchema = z.object({
@@ -35,12 +35,18 @@ export const joinMeetingAction: Action = {
 
   handler: async (runtime: IAgentRuntime, message: Memory) => {
     try {
-      // Extract meeting URL from message
+      // Extract meeting URL from message - handle various Google Meet URL formats
       const urlMatch = message.content.text?.match(
-        /https?:\/\/meet\.google\.com\/[\w-]+/,
+        /https?:\/\/meet\.google\.com\/[\w-]+(?:\/[\w-]+)?(?:\?[^\s]*)*/,
       );
       if (!urlMatch) {
         throw new Error("Could not extract Google Meet URL from message");
+      }
+      
+      // Ensure we have a valid meeting code (not just meet.google.com)
+      const meetingCode = urlMatch[0].match(/meet\.google\.com\/([\w-]+)/)?.[1];
+      if (!meetingCode || meetingCode.length < 3) {
+        throw new Error("Invalid Google Meet URL - missing meeting code. URL should be like: https://meet.google.com/abc-defg-hij");
       }
 
       const params: JoinMeetingParams = {
@@ -52,7 +58,7 @@ export const joinMeetingAction: Action = {
       const validated = joinMeetingSchema.parse(params);
 
       // Get the Google Meet service
-      const meetService = runtime.getService<GoogleMeetService>("google-meet");
+      const meetService = runtime.getService<ExtensionMeetService>("extension-meet");
       if (!meetService) {
         throw new Error("Google Meet service not available");
       }

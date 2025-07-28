@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      width: 350px;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+    }
+    
+    .header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .logo {
+      width: 32px;
+      height: 32px;
+      margin-right: 12px;
+      border-radius: 8px;
+    }
+    
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      color: #333;
+      font-weight: 600;
+    }
+    
+    .status {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      background: white;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .status-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 10px;
+    }
+    
+    .status-indicator.connected {
+      background: #4caf50;
+      box-shadow: 0 0 8px rgba(76, 175, 80, 0.5);
+    }
+    
+    .status-indicator.disconnected {
+      background: #f44336;
+    }
+    
+    .status-indicator.error {
+      background: #ff9800;
+    }
+    
+    .connection-settings {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .input-group {
+      margin-bottom: 12px;
+    }
+    
+    .input-group:last-child {
+      margin-bottom: 0;
+    }
+    
+    label {
+      display: block;
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    
+    input[type="text"] {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #4285f4;
+      box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.1);
+    }
+    
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    
+    button {
+      flex: 1;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    
+    .btn-primary {
+      background: #4285f4;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #3367d6;
+    }
+    
+    .btn-secondary {
+      background: #e0e0e0;
+      color: #333;
+    }
+    
+    .btn-secondary:hover {
+      background: #d0d0d0;
+    }
+    
+    .meeting-info {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .meeting-info h3 {
+      margin: 0 0 10px 0;
+      font-size: 16px;
+      color: #333;
+    }
+    
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    
+    .info-label {
+      color: #666;
+    }
+    
+    .info-value {
+      color: #333;
+      font-weight: 500;
+    }
+    
+    .features {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 15px;
+    }
+    
+    .feature {
+      display: flex;
+      align-items: center;
+      padding: 8px;
+      background: #f8f8f8;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+    
+    .feature input {
+      margin-right: 8px;
+    }
+    
+    .footer {
+      margin-top: 20px;
+      padding-top: 15px;
+      border-top: 1px solid #e0e0e0;
+      text-align: center;
+      font-size: 12px;
+      color: #999;
+    }
+    
+    .footer a {
+      color: #4285f4;
+      text-decoration: none;
+    }
+    
+    .footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="icon-48.png" alt="ElizaOS" class="logo">
+    <h1>ElizaOS Meet Connector</h1>
+  </div>
+  
+  <div class="status">
+    <div class="status-indicator disconnected" id="statusIndicator"></div>
+    <span id="statusText">Disconnected</span>
+  </div>
+  
+  <div class="connection-settings">
+    <div class="input-group">
+      <label for="elizaUrl">ElizaOS WebSocket URL</label>
+      <input type="text" id="elizaUrl" value="ws://localhost:8765" placeholder="ws://localhost:8765">
+    </div>
+    
+    <div class="button-group">
+      <button id="connectBtn" class="btn-primary">Connect</button>
+      <button id="disconnectBtn" class="btn-secondary" style="display: none;">Disconnect</button>
+    </div>
+  </div>
+  
+  <div class="meeting-info" id="meetingInfo" style="display: none;">
+    <h3>Meeting Status</h3>
+    <div class="info-item">
+      <span class="info-label">Meeting ID:</span>
+      <span class="info-value" id="meetingId">-</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">Participants:</span>
+      <span class="info-value" id="participantCount">0</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">Duration:</span>
+      <span class="info-value" id="duration">00:00</span>
+    </div>
+  </div>
+  
+  <div class="features">
+    <label class="feature">
+      <input type="checkbox" id="autoConnect" checked>
+      Auto-connect on startup
+    </label>
+    <label class="feature">
+      <input type="checkbox" id="enableTranscription" checked>
+      Enable transcription capture
+    </label>
+    <label class="feature">
+      <input type="checkbox" id="enableVideoCapture" checked>
+      Enable video/audio recording
+    </label>
+  </div>
+  
+  <div class="footer">
+    <a href="https://elizaos.ai" target="_blank">ElizaOS Documentation</a> | 
+    <a href="#" id="setupOBS">OBS Setup Guide</a>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html> 

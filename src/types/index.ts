@@ -2,9 +2,6 @@ import { z } from "zod";
 
 // Configuration schema
 export const googleMeetConfigSchema = z.object({
-  GOOGLE_MEET_EMAIL: z.string().email(),
-  GOOGLE_MEET_PASSWORD: z.string().optional(),
-  DEFAULT_MEETING_NAME: z.string().default("ElizaOS Bot"),
   TRANSCRIPTION_LANGUAGE: z.string().default("en"),
   REPORT_OUTPUT_DIR: z.string().default("./meeting-reports"),
   ENABLE_REAL_TIME_TRANSCRIPTION: z.union([z.boolean(), z.string()]).transform(val => 
@@ -44,6 +41,8 @@ export interface Transcript {
   text: string;
   timestamp: Date;
   confidence: number;
+  startTime?: number; // Start time in seconds
+  endTime?: number;   // End time in seconds
 }
 
 export type MeetingStatus = "waiting" | "joined" | "active" | "ended" | "error";
@@ -76,11 +75,11 @@ export interface ActionItem {
 }
 
 // Service state
-export interface GoogleMeetServiceState {
+export interface ExtensionMeetServiceState {
   currentMeeting?: Meeting;
   isRecording: boolean;
-  browser?: any; // Puppeteer browser instance
-  page?: any; // Puppeteer page instance
+  isConnected: boolean;
+  activeClients: number;
 }
 
 // Action parameters

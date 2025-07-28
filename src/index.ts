@@ -1,9 +1,10 @@
 import { Plugin, logger } from "@elizaos/core";
-import { GoogleMeetService } from "./services/googleMeetService";
+import { ExtensionMeetService } from "./services/extensionMeetService";
 import {
   joinMeetingAction,
   leaveMeetingAction,
   generateReportAction,
+  summarizeMeetingAction,
 } from "./actions";
 import { meetingProvider } from "./providers";
 import { googleMeetConfigSchema } from "./types";
@@ -13,14 +14,11 @@ export const googleMeetPlugin: Plugin = {
   description:
     "Google Meet integration plugin for ElizaOS - join meetings, transcribe audio, and create reports",
 
-  services: [GoogleMeetService],
-  actions: [joinMeetingAction, leaveMeetingAction, generateReportAction],
+  services: [ExtensionMeetService],
+  actions: [joinMeetingAction, leaveMeetingAction, generateReportAction, summarizeMeetingAction],
   providers: [meetingProvider],
 
   config: {
-    GOOGLE_MEET_EMAIL: process.env.GOOGLE_MEET_EMAIL,
-    GOOGLE_MEET_PASSWORD: process.env.GOOGLE_MEET_PASSWORD,
-    DEFAULT_MEETING_NAME: process.env.DEFAULT_MEETING_NAME,
     TRANSCRIPTION_LANGUAGE: process.env.TRANSCRIPTION_LANGUAGE,
     REPORT_OUTPUT_DIR: process.env.REPORT_OUTPUT_DIR,
     ENABLE_REAL_TIME_TRANSCRIPTION: process.env.ENABLE_REAL_TIME_TRANSCRIPTION,
@@ -33,19 +31,6 @@ export const googleMeetPlugin: Plugin = {
     try {
       // Validate configuration
       const validatedConfig = {
-        GOOGLE_MEET_EMAIL:
-          runtime?.getSetting("GOOGLE_MEET_EMAIL") ||
-          config.GOOGLE_MEET_EMAIL ||
-          process.env.GOOGLE_MEET_EMAIL,
-        GOOGLE_MEET_PASSWORD:
-          runtime?.getSetting("GOOGLE_MEET_PASSWORD") ||
-          config.GOOGLE_MEET_PASSWORD ||
-          process.env.GOOGLE_MEET_PASSWORD,
-        DEFAULT_MEETING_NAME:
-          runtime?.getSetting("DEFAULT_MEETING_NAME") ||
-          config.DEFAULT_MEETING_NAME ||
-          process.env.DEFAULT_MEETING_NAME ||
-          "ElizaOS Bot",
         TRANSCRIPTION_LANGUAGE:
           runtime?.getSetting("TRANSCRIPTION_LANGUAGE") ||
           config.TRANSCRIPTION_LANGUAGE ||
@@ -89,11 +74,11 @@ export const googleMeetPlugin: Plugin = {
     }
   },
 
-  dependencies: ["puppeteer"],
+      dependencies: [],
 };
 
 export default googleMeetPlugin;
 
 // Export types and utilities for external use
 export * from "./types";
-export { GoogleMeetService } from "./services/googleMeetService";
+export { ExtensionMeetService } from "./services/extensionMeetService";

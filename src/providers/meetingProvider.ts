@@ -1,5 +1,5 @@
 import { Provider, IAgentRuntime, Memory, State, logger } from "@elizaos/core";
-import { GoogleMeetService } from "../services/googleMeetService";
+import { ExtensionMeetService } from "../services/extensionMeetService";
 
 export const meetingProvider: Provider = {
   name: "google-meet-meeting",
@@ -7,7 +7,7 @@ export const meetingProvider: Provider = {
 
   get: async (runtime: IAgentRuntime, message: Memory, state: State) => {
     try {
-      const meetService = runtime.getService<GoogleMeetService>("google-meet");
+      const meetService = runtime.getService<ExtensionMeetService>("extension-meet");
       if (!meetService) {
         return { text: "" };
       }

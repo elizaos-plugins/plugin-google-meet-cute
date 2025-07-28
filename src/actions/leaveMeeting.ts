@@ -1,5 +1,5 @@
 import { Action, IAgentRuntime, Memory, logger } from "@elizaos/core";
-import { GoogleMeetService } from "../services/googleMeetService";
+import { ExtensionMeetService } from "../services/extensionMeetService";
 
 export const leaveMeetingAction: Action = {
   name: "LEAVE_GOOGLE_MEET",
@@ -18,7 +18,7 @@ export const leaveMeetingAction: Action = {
   handler: async (runtime: IAgentRuntime, message: Memory) => {
     try {
       // Get the Google Meet service
-      const meetService = runtime.getService<GoogleMeetService>("google-meet");
+      const meetService = runtime.getService<ExtensionMeetService>("extension-meet");
       if (!meetService) {
         throw new Error("Google Meet service not available");
       }

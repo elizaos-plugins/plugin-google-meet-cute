@@ -5,7 +5,7 @@ import {
   logger,
   ModelType,
 } from "@elizaos/core";
-import { GoogleMeetService } from "../services/googleMeetService";
+import { ExtensionMeetService } from "../services/extensionMeetService";
 import { MeetingReport, Transcript } from "../types";
 import fs from "fs/promises";
 import path from "path";
@@ -27,7 +27,7 @@ export const generateReportAction: Action = {
   handler: async (runtime: IAgentRuntime, message: Memory) => {
     try {
       // Get the Google Meet service
-      const meetService = runtime.getService<GoogleMeetService>("google-meet");
+      const meetService = runtime.getService<ExtensionMeetService>("extension-meet");
       if (!meetService) {
         throw new Error("Google Meet service not available");
       }
