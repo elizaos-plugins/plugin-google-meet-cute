@@ -1,9 +1,10 @@
 /**
- * Basic usage example for the Google Meet plugin with Playwright
+ * Basic usage example for the Google Meet REST API plugin
  * 
- * Note: Audio capture functionality is pending implementation.
- * The plugin will join meetings and interact with the UI, but
- * transcription features are temporarily unavailable.
+ * This plugin uses the official Google Meet REST API to:
+ * - Create and manage meeting spaces
+ * - Get participant information
+ * - Access meeting artifacts (transcripts, recordings)
  */
 
 import { AgentRuntime } from "@elizaos/core";
@@ -12,7 +13,7 @@ import { googleMeetPlugin } from "@elizaos/plugin-google-meet-cute";
 // Example character configuration
 const character = {
   name: "MeetBot",
-  bio: "A helpful bot that joins Google Meet meetings",
+  bio: "A helpful AI assistant that manages Google Meet meetings",
   plugins: ["@elizaos/plugin-google-meet-cute"],
 };
 
@@ -26,35 +27,55 @@ async function setupAgent() {
 
   // The plugin will be automatically loaded and available
   
-  // Example: Join a meeting programmatically
-  // This would typically be triggered by a user message
-  const meetingUrl = "https://meet.google.com/abc-defg-hij";
+  // First time setup: Authenticate with Google
+  // User: "Authenticate with Google"
+  // Agent will provide OAuth2 URL for authentication
   
-  // The plugin provides actions that can be triggered:
-  // - JOIN_GOOGLE_MEET: Join a meeting
-  // - LEAVE_GOOGLE_MEET: Leave the current meeting
-  // - GENERATE_MEETING_REPORT: Create a summary (when transcription is implemented)
+  // Example actions that can be triggered:
+  
+  // 1. Create a new meeting
+  // User: "Create a new meeting"
+  // User: "Start a private team meeting" (creates restricted access)
+  
+  // 2. Get meeting information
+  // User: "What's the status of the current meeting?"
+  // User: "Show meeting details"
+  
+  // 3. List participants
+  // User: "Who's in the meeting?"
+  // User: "List all participants"
+  
+  // 4. Generate meeting report
+  // User: "Generate a meeting report"
+  // User: "Get the meeting transcript"
 }
 
 // Environment variables needed:
-// GOOGLE_MEET_EMAIL=your-bot@gmail.com
-// GOOGLE_MEET_PASSWORD=your-password (optional)
-// PLAYWRIGHT_USER_DATA_DIR=./browser-data (optional, for persistent sessions)
-
-// Example prompts that trigger the plugin:
-// - "Join this meeting: https://meet.google.com/xyz-123-456"
-// - "Please attend our team standup at https://meet.google.com/abc-defg-hij"
-// - "Leave the current meeting"
-
 console.log(`
-Google Meet Plugin - Playwright Migration Example
+Google Meet REST API Plugin - Configuration
 
-This plugin now uses Playwright for browser automation, providing:
-- Better reliability and stability
-- Cross-browser support (Chromium, Firefox, WebKit)
-- Improved debugging capabilities
-- Better TypeScript integration
+Required environment variables:
+- GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+- GOOGLE_CLIENT_SECRET=your-client-secret
 
-Note: Audio capture and transcription features are temporarily unavailable
-and will be reimplemented in a future update.
+Optional:
+- GOOGLE_REDIRECT_URI=http://localhost:3000/oauth2callback
+- GOOGLE_REFRESH_TOKEN=your-refresh-token (after first auth)
+- GOOGLE_MEET_DEFAULT_ACCESS_TYPE=OPEN (OPEN, TRUSTED, or RESTRICTED)
+- REPORT_OUTPUT_DIR=./meeting-reports
+
+Setup steps:
+1. Create a Google Cloud Project
+2. Enable Google Meet API
+3. Create OAuth2 credentials
+4. Configure environment variables
+5. Run agent and authenticate
+6. Start using Meet API features!
+
+Available actions:
+- AUTHENTICATE_GOOGLE: Authenticate with Google OAuth2
+- CREATE_MEETING: Create a new meeting space
+- GET_MEETING_INFO: Get meeting details
+- GET_PARTICIPANTS: List meeting participants  
+- GENERATE_REPORT: Generate meeting report from artifacts
 `); 

@@ -2,22 +2,23 @@ import { z } from "zod";
 
 // Configuration schema
 export const googleMeetConfigSchema = z.object({
-  TRANSCRIPTION_LANGUAGE: z.string().default("en"),
-  REPORT_OUTPUT_DIR: z.string().default("./meeting-reports"),
-  ENABLE_REAL_TIME_TRANSCRIPTION: z.union([z.boolean(), z.string()]).transform(val => 
-    typeof val === 'string' ? val === 'true' : val
-  ).default(true),
-  AUDIO_CHUNK_DURATION_MS: z.union([z.number(), z.string()]).transform(val => 
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  GOOGLE_REDIRECT_URI: z.string().default("http://localhost:3000/oauth2callback"),
+  GOOGLE_REFRESH_TOKEN: z.string().optional(),
+  GOOGLE_MEET_DEFAULT_DURATION_MINUTES: z.union([z.number(), z.string()]).transform(val => 
     typeof val === 'string' ? parseInt(val, 10) : val
-  ).default(30000), // 30 seconds chunks for Whisper
+  ).default(60),
+  GOOGLE_MEET_DEFAULT_ACCESS_TYPE: z.enum(['OPEN', 'TRUSTED', 'RESTRICTED']).default('OPEN'),
 });
 
 export type GoogleMeetConfig = z.infer<typeof googleMeetConfigSchema>;
 
 // Meeting types
 export interface Meeting {
-  id: string;
-  url: string;
+  id: string; // Space name
+  meetingCode: string;
+  meetingUri: string;
   title?: string;
   startTime: Date;
   endTime?: Date;
@@ -31,7 +32,7 @@ export interface Participant {
   name: string;
   joinTime: Date;
   leaveTime?: Date;
-  isSpeaking: boolean;
+  isActive: boolean;
 }
 
 export interface Transcript {
@@ -45,13 +46,11 @@ export interface Transcript {
   endTime?: number;   // End time in seconds
 }
 
-export type MeetingStatus = "waiting" | "joined" | "active" | "ended" | "error";
-
-// Audio streaming types
-export interface AudioChunk {
-  data: Buffer;
-  timestamp: Date;
-  speakerId?: string;
+export enum MeetingStatus {
+  WAITING = "waiting",
+  ACTIVE = "active", 
+  ENDED = "ended",
+  ERROR = "error"
 }
 
 // Report types
@@ -75,21 +74,30 @@ export interface ActionItem {
 }
 
 // Service state
-export interface ExtensionMeetServiceState {
+export interface GoogleMeetAPIServiceState {
   currentMeeting?: Meeting;
-  isRecording: boolean;
-  isConnected: boolean;
-  activeClients: number;
+  isAuthenticated: boolean;
+  hasRefreshToken: boolean;
 }
 
 // Action parameters
-export interface JoinMeetingParams {
-  meetingUrl: string;
-  displayName?: string;
+export interface CreateMeetingParams {
+  accessType?: 'OPEN' | 'TRUSTED' | 'RESTRICTED';
+  title?: string;
+}
+
+export interface GetMeetingInfoParams {
+  meetingId?: string; // Space name or meeting code
 }
 
 export interface GenerateReportParams {
   meetingId: string;
   includeSummary?: boolean;
   includeActionItems?: boolean;
+  includeTranscript?: boolean;
+  includeRecordings?: boolean;
+}
+
+export interface AuthenticateParams {
+  interactive?: boolean;
 }

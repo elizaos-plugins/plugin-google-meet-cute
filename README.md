@@ -1,47 +1,66 @@
-# @elizaos/plugin-google-meet-cute
+# ElizaOS Google Meet Plugin
 
-A powerful Chrome extension-based Google Meet integration plugin for ElizaOS that enables automated meeting participation, real-time transcription, and AI-powered meeting summaries.
+Google Meet integration plugin for ElizaOS - manage meetings, get participant info, and access meeting artifacts via Google Meet REST API.
 
 ## Features
 
-- 🚀 **Automated Meeting Join** - Join Google Meet meetings with a simple command
-- 🎙️ **Real-time Transcription** - Capture meeting audio using OpenAI Whisper
-- 📝 **Meeting Summaries** - AI-powered summaries of discussions and action items
-- 👥 **Participant Tracking** - Monitor who joins and leaves meetings
-- 🎬 **Meeting Recording** - Record audio/video for later review
-- 🔌 **Chrome Extension** - Reliable, undetectable browser automation
-- 💬 **Closed Caption Support** - Automatic caption capture as backup
+- 🔐 **OAuth2 Authentication** - Secure authentication with Google
+- 📅 **Meeting Management** - Create and manage Google Meet spaces
+- 👥 **Participant Tracking** - Get real-time participant information  
+- 📝 **Meeting Artifacts** - Access recordings and transcripts (when available)
+- 📊 **Meeting Reports** - Generate reports from meeting data
+- 🔒 **Privacy-First** - Uses official Google APIs with proper authorization
 
-## How It Works
+## Version 2.0 - Complete API Rewrite
 
-This plugin uses a Chrome extension to interact with Google Meet, avoiding detection issues common with browser automation tools. The extension communicates with ElizaOS via WebSocket, providing real-time meeting data and control.
+This plugin has been completely rewritten to use the official Google Meet REST API instead of browser automation. This provides:
 
-```
-Google Meet ← Chrome Extension ← WebSocket → ElizaOS Plugin → Your Agent
-```
+- **Stability**: No more DOM hacks or browser dependencies
+- **Reliability**: Official API with proper error handling
+- **Security**: OAuth2 authentication with Google
+- **Scalability**: Server-side operation without browser overhead
 
-## Quick Start
+## Prerequisites
 
-### 1. Install the Chrome Extension
+1. Google Cloud Project with Meet API enabled
+2. OAuth2 credentials (Client ID and Secret)
+3. Node.js 18+ and npm/yarn/bun
 
-1. Open Chrome and navigate to `chrome://extensions/`
-2. Enable "Developer mode" (top right)
-3. Click "Load unpacked"
-4. Select the `plugin-google-meet-cute/extension/` folder
-5. The extension icon should appear in your toolbar
+## Installation
+
+### 1. Set up Google Cloud Project
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select existing
+3. Enable the Google Meet API:
+   - Go to "APIs & Services" > "Library"
+   - Search for "Google Meet API"
+   - Click "Enable"
+4. Create OAuth2 credentials:
+   - Go to "APIs & Services" > "Credentials"
+   - Click "Create Credentials" > "OAuth client ID"
+   - Choose "Web application"
+   - Add authorized redirect URI: `http://localhost:3000/oauth2callback`
+   - Save the Client ID and Client Secret
 
 ### 2. Configure ElizaOS
 
 Create a `.env` file in your project root:
 
 ```bash
-# Required for transcription
-OPENAI_API_KEY=sk-your-openai-api-key-here
+# Required: OAuth2 credentials
+GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-client-secret
 
-# Optional configuration
-EXTENSION_WS_PORT=8765  # WebSocket port (default: 8765)
-TRANSCRIPTION_LANGUAGE=en  # Language for transcription
-AUDIO_CHUNK_DURATION_MS=30000  # Process audio every 30 seconds
+# Optional: OAuth redirect URI (default: http://localhost:3000/oauth2callback)
+GOOGLE_REDIRECT_URI=http://localhost:3000/oauth2callback
+
+# Optional: If you have a refresh token from previous auth
+# GOOGLE_REFRESH_TOKEN=your-refresh-token
+
+# Optional: Default meeting settings
+GOOGLE_MEET_DEFAULT_ACCESS_TYPE=OPEN  # OPEN, TRUSTED, or RESTRICTED
+REPORT_OUTPUT_DIR=./meeting-reports
 ```
 
 ### 3. Add Plugin to Your Agent
@@ -62,205 +81,147 @@ const character = {
 npm start
 ```
 
-The plugin will start a WebSocket server on port 8765 (or your configured port).
-
-### 5. Connect Extension to ElizaOS
-
-1. Click the extension icon in Chrome
-2. Verify the WebSocket URL (default: `ws://localhost:8765`)
-3. Click "Connect"
-4. Status should show "Connected to ElizaOS"
-
 ## Usage
 
-### Join a Meeting
+### First Time Setup - Authenticate
 
 ```
-User: Join the meeting https://meet.google.com/abc-defg-hij
-Agent: I'll join the meeting for you...
+User: Authenticate with Google
+Agent: I'll help you authenticate with Google Meet API...
+[Opens browser for OAuth flow]
 ```
 
-The extension will:
-- Open the meeting in a new tab
-- Automatically click "Join now"
-- Enable closed captions for transcription
-- Start capturing meeting data
+After authentication, save the refresh token to your `.env` file to avoid re-authentication.
 
-### Get Meeting Summary
+### Create a Meeting
 
 ```
-User: What's happening in the meeting?
-User: Summarize the discussion
-User: Give me a meeting recap
+User: Create a new meeting
+Agent: I'll create a new Google Meet meeting for you...
+Returns: Meeting link and code
 ```
 
-Returns a detailed summary including:
-- Meeting duration and participant list
-- Transcript statistics
-- Recent discussion (last 20 segments)
-- Speaker contributions
+```
+User: Create a private meeting
+Agent: I'll create a restricted access meeting...
+Returns: Meeting link with restricted access
+```
 
-### Leave Meeting
+### Get Meeting Information
 
 ```
-User: Leave the meeting
-Agent: I'll leave the current meeting...
+User: What's the status of the current meeting?
+Agent: I'll check the current meeting status...
+Returns: Meeting details, participants, duration
+```
+
+### List Participants
+
+```
+User: Who's in the meeting?
+Agent: I'll check who's currently in the meeting...
+Returns: List of participants with join times
 ```
 
 ### Generate Meeting Report
 
 ```
-User: Generate a meeting report
-Agent: I'll create a comprehensive report...
+User: Generate a report for the meeting
+Agent: I'll generate a comprehensive report...
+Returns: Meeting summary with available artifacts
 ```
-
-Creates a markdown report with:
-- Executive summary
-- Key discussion points
-- Action items
-- Full transcript
 
 ## Available Actions
 
-| Action | Description | Example Command |
-|--------|-------------|-----------------|
-| `JOIN_MEETING` | Join a Google Meet | "Join the meeting [url]" |
-| `LEAVE_MEETING` | Leave current meeting | "Leave the meeting" |
-| `SUMMARIZE_MEETING` | Get meeting summary | "What happened in the meeting?" |
-| `GENERATE_REPORT` | Create detailed report | "Generate a meeting report" |
+| Action | Description | Example Commands |
+|--------|-------------|------------------|
+| `AUTHENTICATE_GOOGLE` | Authenticate with Google OAuth2 | "Authenticate with Google", "Login to Google" |
+| `CREATE_MEETING` | Create a new meeting space | "Create a meeting", "Start a new call" |
+| `GET_MEETING_INFO` | Get meeting details | "Meeting status", "Check meeting" |
+| `GET_PARTICIPANTS` | List meeting participants | "Who's in the meeting?", "List attendees" |
+| `GENERATE_REPORT` | Generate meeting report | "Create report", "Get transcript" |
 
-## Transcription Features
+## API Limitations
 
-### Automatic Closed Captions
-- Extension automatically enables CC when joining
-- Captures Google's transcriptions as primary source
-- No additional setup required
+The Google Meet REST API has some limitations:
 
-### OpenAI Whisper Integration
-- Real-time audio processing every 30 seconds
-- High-accuracy transcription
-- Multi-language support (50+ languages)
-- Cost: ~$0.006/minute
-
-### Meeting Memories
-- Important discussion points are saved
-- Searchable meeting history
-- Context for future interactions
-
-## OBS Virtual Camera (Optional)
-
-For professional video presence:
-
-1. Install [OBS Studio](https://obsproject.com)
-2. Create scenes with backgrounds/overlays
-3. Start Virtual Camera in OBS
-4. Select "OBS Virtual Camera" in Google Meet settings
-
-See the [OBS Setup Guide](extension/obs-setup.html) for detailed instructions.
-
-## Configuration Options
-
-| Environment Variable | Description | Default |
-|---------------------|-------------|---------|
-| `OPENAI_API_KEY` | OpenAI API key for transcription | Required |
-| `EXTENSION_WS_PORT` | WebSocket server port | 8765 |
-| `TRANSCRIPTION_LANGUAGE` | Language code (en, es, fr, etc.) | en |
-| `AUDIO_CHUNK_DURATION_MS` | Audio processing interval | 30000 |
-| `ENABLE_REAL_TIME_TRANSCRIPTION` | Enable live transcription | true |
-| `REPORT_OUTPUT_DIR` | Directory for reports | ./meeting-reports |
-
-## Troubleshooting
-
-### Extension Issues
-
-**Extension won't load:**
-- Check all files are present in `/extension` folder
-- Ensure Developer Mode is enabled
-- Try removing and re-adding the extension
-
-**Not connecting to ElizaOS:**
-- Verify ElizaOS is running (`npm start`)
-- Check WebSocket port matches in extension and .env
-- Look for errors in browser console (F12)
-
-**Meeting won't auto-join:**
-- Ensure you're logged into Google account
-- Try manual join first time
-- Check if Google Meet UI has changed
-
-### Transcription Issues
-
-**No transcripts appearing:**
-- Verify OpenAI API key is set
-- Check closed captions are enabled
-- Wait 30+ seconds for first batch
-- Check browser console for errors
-
-**Poor quality transcription:**
-- Ensure good audio quality
-- Speakers should be unmuted
-- Minimize background noise
+1. **Real-time Data**: The API provides conference records after meetings, not real-time data
+2. **Transcripts**: Only available after meetings end and if recording was enabled
+3. **Participant Updates**: Participant lists update with some delay
+4. **Meeting Control**: Limited control over active meetings (can't mute, remove participants, etc.)
 
 ## Architecture
 
 ```
-┌─────────────────┐     WebSocket      ┌─────────────────┐
-│                 │ ◄─────────────────► │                 │
-│   Chrome        │                     │   ElizaOS       │
-│   Extension     │                     │   Service       │
-│                 │                     │                 │
-└────────┬────────┘                     └────────┬────────┘
-         │                                       │
-         │ DOM Access                           │ Transcription
-         │                                       │
-┌────────▼────────┐                    ┌────────▼────────┐
-│                 │                    │                 │
-│  Google Meet    │                    │  OpenAI Whisper │
-│   Web Page      │                    │      API        │
-│                 │                    │                 │
-└─────────────────┘                    └─────────────────┘
+┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
+│   ElizaOS Agent │────▶│  Google Auth     │────▶│  Google Meet    │
+│                 │     │  Service         │     │  REST API       │
+└─────────────────┘     └──────────────────┘     └─────────────────┘
+                               │
+                               ▼
+                        ┌──────────────────┐
+                        │  Google Meet API │
+                        │  Service         │
+                        └──────────────────┘
 ```
+
+## Troubleshooting
+
+### Authentication Issues
+
+- Ensure Client ID and Secret are correctly set in `.env`
+- Check that redirect URI matches exactly in Google Console and `.env`
+- Verify Meet API is enabled in Google Cloud Console
+
+### API Errors
+
+- **403 Forbidden**: Check OAuth scopes and API enablement
+- **404 Not Found**: Meeting space or conference may not exist
+- **429 Too Many Requests**: Implement rate limiting
+
+### Getting Help
+
+1. Check logs for detailed error messages
+2. Ensure all environment variables are set
+3. Verify Google Cloud Project configuration
+4. Open an issue with error details
 
 ## Development
 
-### Building from Source
+### Running Tests
 
 ```bash
-# Clone the repository
-git clone https://github.com/elizaos/plugin-google-meet-cute
-cd plugin-google-meet-cute
-
-# Install dependencies
-npm install --legacy-peer-deps
-
-# Build the plugin
-npm run build
+npm test
 ```
 
-### Testing
+### Building
 
 ```bash
-# Run tests
-npm test
-
-# Watch mode
-npm run test:watch
+npm run build
 ```
 
 ## Contributing
 
-Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details.
+Contributions are welcome! Please:
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests
+5. Submit a pull request
 
 ## License
 
-MIT © ElizaOS
+MIT
 
-## Support
+## Changelog
 
-- [Documentation](https://elizaos.ai/docs)
-- [Discord Community](https://discord.gg/elizaos)
-- [GitHub Issues](https://github.com/elizaos/plugin-google-meet-cute/issues)
+### v2.0.0
+- Complete rewrite to use Google Meet REST API
+- Removed Chrome extension dependency
+- Added OAuth2 authentication
+- Improved stability and reliability
+- Better error handling
 
----
-
-Made with ❤️ by the ElizaOS community
+### v1.0.0
+- Initial release with browser automation

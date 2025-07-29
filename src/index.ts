@@ -1,10 +1,12 @@
 import { Plugin, logger } from "@elizaos/core";
-import { ExtensionMeetService } from "./services/extensionMeetService";
+import { GoogleAuthService } from "./services/googleAuthService";
+import { GoogleMeetAPIService } from "./services/googleMeetAPIService";
 import {
-  joinMeetingAction,
-  leaveMeetingAction,
+  createMeetingAction,
+  getMeetingInfoAction,
+  getParticipantsAction,
   generateReportAction,
-  summarizeMeetingAction,
+  authenticateAction
 } from "./actions";
 import { meetingProvider } from "./providers";
 import { googleMeetConfigSchema } from "./types";
@@ -12,17 +14,25 @@ import { googleMeetConfigSchema } from "./types";
 export const googleMeetPlugin: Plugin = {
   name: "plugin-google-meet-cute",
   description:
-    "Google Meet integration plugin for ElizaOS - join meetings, transcribe audio, and create reports",
+    "Google Meet integration plugin for ElizaOS - manage meetings, get participant info, and access meeting artifacts via Google Meet REST API",
 
-  services: [ExtensionMeetService],
-  actions: [joinMeetingAction, leaveMeetingAction, generateReportAction, summarizeMeetingAction],
+  services: [GoogleAuthService, GoogleMeetAPIService],
+  actions: [
+    authenticateAction,
+    createMeetingAction,
+    getMeetingInfoAction,
+    getParticipantsAction,
+    generateReportAction
+  ],
   providers: [meetingProvider],
 
   config: {
-    TRANSCRIPTION_LANGUAGE: process.env.TRANSCRIPTION_LANGUAGE,
+    GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+    GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+    GOOGLE_REDIRECT_URI: process.env.GOOGLE_REDIRECT_URI,
+    GOOGLE_REFRESH_TOKEN: process.env.GOOGLE_REFRESH_TOKEN,
+    GOOGLE_MEET_DEFAULT_ACCESS_TYPE: process.env.GOOGLE_MEET_DEFAULT_ACCESS_TYPE,
     REPORT_OUTPUT_DIR: process.env.REPORT_OUTPUT_DIR,
-    ENABLE_REAL_TIME_TRANSCRIPTION: process.env.ENABLE_REAL_TIME_TRANSCRIPTION,
-    AUDIO_CHUNK_DURATION_MS: process.env.AUDIO_CHUNK_DURATION_MS,
   },
 
   async init(config: Record<string, string>, runtime?: any): Promise<void> {
@@ -31,26 +41,33 @@ export const googleMeetPlugin: Plugin = {
     try {
       // Validate configuration
       const validatedConfig = {
-        TRANSCRIPTION_LANGUAGE:
-          runtime?.getSetting("TRANSCRIPTION_LANGUAGE") ||
-          config.TRANSCRIPTION_LANGUAGE ||
-          process.env.TRANSCRIPTION_LANGUAGE ||
-          "en",
+        GOOGLE_CLIENT_ID:
+          runtime?.getSetting("GOOGLE_CLIENT_ID") ||
+          config.GOOGLE_CLIENT_ID ||
+          process.env.GOOGLE_CLIENT_ID,
+        GOOGLE_CLIENT_SECRET:
+          runtime?.getSetting("GOOGLE_CLIENT_SECRET") ||
+          config.GOOGLE_CLIENT_SECRET ||
+          process.env.GOOGLE_CLIENT_SECRET,
+        GOOGLE_REDIRECT_URI:
+          runtime?.getSetting("GOOGLE_REDIRECT_URI") ||
+          config.GOOGLE_REDIRECT_URI ||
+          process.env.GOOGLE_REDIRECT_URI ||
+          "http://localhost:3000/oauth2callback",
+        GOOGLE_REFRESH_TOKEN:
+          runtime?.getSetting("GOOGLE_REFRESH_TOKEN") ||
+          config.GOOGLE_REFRESH_TOKEN ||
+          process.env.GOOGLE_REFRESH_TOKEN,
+        GOOGLE_MEET_DEFAULT_ACCESS_TYPE:
+          runtime?.getSetting("GOOGLE_MEET_DEFAULT_ACCESS_TYPE") ||
+          config.GOOGLE_MEET_DEFAULT_ACCESS_TYPE ||
+          process.env.GOOGLE_MEET_DEFAULT_ACCESS_TYPE ||
+          "OPEN",
         REPORT_OUTPUT_DIR:
           runtime?.getSetting("REPORT_OUTPUT_DIR") ||
           config.REPORT_OUTPUT_DIR ||
           process.env.REPORT_OUTPUT_DIR ||
           "./meeting-reports",
-        ENABLE_REAL_TIME_TRANSCRIPTION:
-          runtime?.getSetting("ENABLE_REAL_TIME_TRANSCRIPTION") ||
-          config.ENABLE_REAL_TIME_TRANSCRIPTION ||
-          process.env.ENABLE_REAL_TIME_TRANSCRIPTION ||
-          "true",
-        AUDIO_CHUNK_DURATION_MS:
-          runtime?.getSetting("AUDIO_CHUNK_DURATION_MS") ||
-          config.AUDIO_CHUNK_DURATION_MS ||
-          process.env.AUDIO_CHUNK_DURATION_MS ||
-          "30000",
       };
 
       // Validate with schema
@@ -63,6 +80,11 @@ export const googleMeetPlugin: Plugin = {
         runtime.character.settings = runtime.character.settings || {};
         runtime.character.settings.googleMeetConfig = validatedConfig;
       }
+
+      // Check if credentials are configured
+      if (!validatedConfig.GOOGLE_CLIENT_ID || !validatedConfig.GOOGLE_CLIENT_SECRET) {
+        logger.warn("Google OAuth credentials not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to use the Google Meet API.");
+      }
     } catch (error) {
       logger.error(
         "Google Meet plugin configuration validation failed:",
@@ -74,11 +96,12 @@ export const googleMeetPlugin: Plugin = {
     }
   },
 
-      dependencies: [],
+  dependencies: [],
 };
 
 export default googleMeetPlugin;
 
 // Export types and utilities for external use
 export * from "./types";
-export { ExtensionMeetService } from "./services/extensionMeetService";
+export { GoogleAuthService } from "./services/googleAuthService";
+export { GoogleMeetAPIService } from "./services/googleMeetAPIService";

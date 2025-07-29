@@ -1,202 +1,143 @@
-# Complete Documentation
+# Google Meet REST API Plugin Documentation
 
-This document consolidates all key information about the Google Meet Chrome Extension plugin.
+## Overview
 
-## Table of Contents
+The Google Meet plugin for ElizaOS provides integration with Google Meet using the official REST API. This enables agents to:
 
-1. [Chrome Extension Setup](#chrome-extension-setup)
-2. [Audio Transcription](#audio-transcription)
-3. [Auto-Join Feature](#auto-join-feature)
-4. [OBS Virtual Camera](#obs-virtual-camera)
-5. [Troubleshooting](#troubleshooting)
+- Create and manage meeting spaces
+- Get participant information
+- Access meeting artifacts (transcripts, recordings)
+- Generate comprehensive meeting reports
 
----
+## Architecture
 
-## Chrome Extension Setup
+This plugin uses a service-based architecture with two main services:
 
-### Installation Steps
+### GoogleAuthService
+Handles OAuth2 authentication with Google:
+- Manages OAuth2 flow
+- Stores and refreshes access tokens
+- Provides authentication status
 
-1. **Load Extension in Chrome**
-   - Open `chrome://extensions/`
-   - Enable "Developer mode"
-   - Click "Load unpacked"
-   - Select `/plugin-google-meet-cute/extension/` folder
+### GoogleMeetAPIService
+Interfaces with the Google Meet REST API:
+- Creates meeting spaces
+- Retrieves conference information
+- Lists participants
+- Accesses meeting artifacts
 
-2. **Configure ElizaOS**
-   ```bash
-   # .env file
-   OPENAI_API_KEY=sk-your-key-here
-   EXTENSION_WS_PORT=8765
-   ```
+## Actions
 
-3. **Connect Extension**
-   - Click extension icon
-   - Verify WebSocket URL
-   - Click "Connect"
+### AUTHENTICATE_GOOGLE
+Initiates OAuth2 authentication flow.
 
-### How It Works
+**Triggers**: "authenticate with google", "login to google", "sign in"
 
-```
-Google Meet ← Extension ← WebSocket → ElizaOS
-```
+**Process**:
+1. Generates OAuth2 authorization URL
+2. Starts local server for callback
+3. User authorizes in browser
+4. Receives and stores tokens
 
-The extension:
-- Runs as trusted Chrome component (no bot detection)
-- Captures DOM events and transcripts
-- Controls meeting (join, leave, mute)
-- Sends data to ElizaOS in real-time
+### CREATE_MEETING
+Creates a new Google Meet meeting space.
 
----
+**Triggers**: "create meeting", "start a call", "new meeting"
 
-## Audio Transcription
+**Parameters**:
+- `accessType`: OPEN, TRUSTED, or RESTRICTED (optional)
 
-### Features
+**Returns**: Meeting link and code
 
-1. **Automatic Closed Captions**
-   - Enabled automatically when joining
-   - Free transcription from Google
-   - Speaker identification included
+### GET_MEETING_INFO
+Retrieves information about a meeting.
 
-2. **OpenAI Whisper Integration**
-   - Processes audio every 30 seconds
-   - 50+ language support
-   - ~$0.006/minute cost
+**Triggers**: "meeting status", "check meeting", "meeting info"
 
-### Configuration
+**Returns**: Meeting details, status, participants
+
+### GET_PARTICIPANTS
+Lists participants in a meeting.
+
+**Triggers**: "who's in the meeting", "list participants", "attendees"
+
+**Returns**: Participant list with join/leave times
+
+### GENERATE_REPORT
+Generates a report from meeting artifacts.
+
+**Triggers**: "generate report", "meeting summary", "get transcript"
+
+**Parameters**:
+- `includeTranscript`: Include full transcript (optional)
+- `includeActionItems`: Extract action items (optional)
+
+**Returns**: Formatted report saved to file
+
+## Providers
+
+### GOOGLE_MEET_PROVIDER
+Provides current meeting context to the agent.
+
+**Returns**: Current meeting status, participant count, duration
+
+## Configuration
+
+### Required Environment Variables
 
 ```bash
-# Transcription settings
-TRANSCRIPTION_LANGUAGE=en  # or es, fr, de, etc.
-AUDIO_CHUNK_DURATION_MS=30000  # Process interval
-ENABLE_REAL_TIME_TRANSCRIPTION=true
+GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-client-secret
 ```
 
-### Usage
+### Optional Environment Variables
 
-```
-User: "Join the meeting https://meet.google.com/abc-defg-hij"
-# Extension joins and starts transcribing
-
-User: "What's happening in the meeting?"
-# Returns summary with transcripts
-```
-
----
-
-## Auto-Join Feature
-
-### How It Works
-
-1. Opens meeting URL in new tab
-2. Waits 3 seconds for page load
-3. Sets display name (if provided)
-4. Clicks "Join now" automatically
-
-### Configuration
-
-To adjust timing, edit `extension/background.js`:
-```javascript
-setTimeout(() => {
-  // Set display name
-  if (meetingInfo.displayName) {
-    chrome.tabs.sendMessage(tabId, { 
-      type: 'SET_DISPLAY_NAME',
-      displayName: meetingInfo.displayName
-    });
-  }
-  
-  // Click join button
-  setTimeout(() => {
-    chrome.tabs.sendMessage(tabId, { 
-      type: 'CLICK_JOIN_BUTTON' 
-    });
-  }, 1000); // Delay after name
-}, 3000); // Initial delay
+```bash
+GOOGLE_REDIRECT_URI=http://localhost:3000/oauth2callback
+GOOGLE_REFRESH_TOKEN=your-refresh-token
+GOOGLE_MEET_DEFAULT_ACCESS_TYPE=OPEN
+REPORT_OUTPUT_DIR=./meeting-reports
 ```
 
----
+## API Integration
 
-## OBS Virtual Camera
+The plugin uses these Google Meet API endpoints:
 
-### Benefits
-- Professional backgrounds
-- Screen sharing with webcam
-- Video filters and effects
-- High-quality recording
+- `spaces.create`: Create new meeting spaces
+- `spaces.get`: Get meeting space details
+- `spaces.endActiveConference`: End active conferences
+- `conferenceRecords.get`: Get conference information
+- `conferenceRecords.participants.list`: List participants
+- `conferenceRecords.transcripts.get`: Get transcripts
+- `conferenceRecords.recordings.list`: List recordings
 
-### Quick Setup
-1. Install OBS Studio
-2. Create your scene
-3. Start Virtual Camera
-4. Select "OBS Virtual Camera" in Meet
+## Limitations
 
-See full guide: `extension/obs-setup.html`
+1. **Real-time Updates**: The API provides data with some delay
+2. **Meeting Control**: Limited control over active meetings
+3. **Transcripts**: Only available after meetings with recording enabled
+4. **Participant Updates**: Not real-time, requires polling
 
----
+## Security Considerations
 
-## Troubleshooting
+- OAuth2 tokens are stored in memory
+- Refresh tokens should be stored securely
+- Use environment variables for sensitive data
+- Follow Google's OAuth2 best practices
 
-### Common Issues
+## Error Handling
 
-**Extension not connecting:**
-- Check ElizaOS is running
-- Verify port 8765 is free
-- Check browser console (F12)
+The plugin handles common errors:
 
-**No transcripts:**
-- Ensure OpenAI key is set
-- Check captions are enabled
-- Wait 30+ seconds
+- **Authentication errors**: Prompts for re-authentication
+- **API rate limits**: Implements exponential backoff
+- **Network errors**: Retries with timeout
+- **Invalid meeting IDs**: Returns user-friendly messages
 
-**Meeting won't join:**
-- Logged into Google?
-- Try manual join first
-- Check for UI changes
+## Best Practices
 
-### Debug Commands
-
-In browser console:
-```javascript
-// Check meeting state
-window.postMessage({ 
-  source: 'eliza-meet-content', 
-  type: 'CHECK_MEETING_STATE' 
-}, '*');
-
-// Manually trigger join
-window.postMessage({ 
-  source: 'eliza-meet-content', 
-  type: 'CLICK_JOIN_BUTTON' 
-}, '*');
-```
-
----
-
-## Architecture Overview
-
-### Extension Components
-
-1. **manifest.json** - Extension configuration
-2. **background.js** - Service worker, WebSocket connection
-3. **content.js** - Runs on Meet pages
-4. **inject.js** - Direct DOM access
-5. **popup.html/js** - User interface
-
-### Service Components
-
-1. **ExtensionMeetService** - WebSocket server
-2. **AudioTranscriptionService** - Whisper integration
-3. **Actions** - join, leave, summarize, report
-4. **Providers** - Meeting state context
-
-### Data Flow
-
-```
-User Command → Agent → Action → Service → WebSocket → Extension → Google Meet
-                                   ↓
-                            Whisper API ← Audio Data
-```
-
----
-
-For more details, see the individual documentation files or the main [README.md](README.md). 
+1. **Authentication**: Store refresh token after first auth
+2. **Rate Limiting**: Avoid excessive API calls
+3. **Error Messages**: Provide clear user feedback
+4. **Logging**: Use appropriate log levels
+5. **Configuration**: Validate all settings on init 

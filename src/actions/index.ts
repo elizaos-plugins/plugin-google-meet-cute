@@ -1,4 +1,5 @@
-export { joinMeetingAction } from "./joinMeeting";
-export { leaveMeetingAction } from "./leaveMeeting";
+export { createMeetingAction } from "./createMeeting";
+export { getMeetingInfoAction } from "./getMeetingInfo";
+export { getParticipantsAction } from "./getParticipants";
 export { generateReportAction } from "./generateReport";
-export { summarizeMeetingAction } from "./summarizeMeeting";
+export { authenticateAction } from "./authenticate";
