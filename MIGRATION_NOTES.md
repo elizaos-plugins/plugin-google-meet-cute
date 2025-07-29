@@ -4,6 +4,11 @@
 
 Version 2.0 of the Google Meet plugin has been completely rewritten to use the official Google Meet REST API instead of browser automation. This provides better stability, reliability, and security.
 
+**Key Changes:**
+- Now uses the official `@google-apps/meet` Node.js client library
+- OAuth2 authentication instead of browser sessions
+- API-based meeting management instead of DOM manipulation
+
 ## Breaking Changes
 
 ### Removed Features

@@ -1,6 +1,5 @@
 import { Service, IAgentRuntime, logger } from "@elizaos/core";
 import { OAuth2Client } from "google-auth-library";
-import { google } from "googleapis";
 import { createServer } from "http";
 import { URL } from "url";
 
@@ -25,7 +24,7 @@ export class GoogleAuthService extends Service {
       throw new Error("Google OAuth2 credentials not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET");
     }
     
-    this.oauth2Client = new google.auth.OAuth2(
+    this.oauth2Client = new OAuth2Client(
       clientId,
       clientSecret,
       redirectUri

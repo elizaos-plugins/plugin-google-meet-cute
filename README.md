@@ -150,6 +150,14 @@ The Google Meet REST API has some limitations:
 3. **Participant Updates**: Participant lists update with some delay
 4. **Meeting Control**: Limited control over active meetings (can't mute, remove participants, etc.)
 
+## Technical Details
+
+- Uses the official `@google-apps/meet` Node.js client library
+- OAuth2 authentication with Google
+- Supports meeting spaces and conference records
+- Access to meeting artifacts (recordings, transcripts)
+- No browser automation or DOM manipulation
+
 ## Architecture
 
 ```

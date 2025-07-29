@@ -1,33 +1,16 @@
 import { Service, IAgentRuntime, logger } from "@elizaos/core";
-import { google, meet_v2 } from "googleapis";
+import { SpacesServiceClient, ConferenceRecordsServiceClient } from '@google-apps/meet';
 import { GoogleAuthService } from "./googleAuthService";
 import { Meeting, MeetingStatus, Participant, Transcript } from "../types";
-import axios from "axios";
 
 export class GoogleMeetAPIService extends Service {
-  static serviceType = "google-meet-api" as const;
-  
-  private authService: GoogleAuthService;
-  private meetClient: meet_v2.Meet;
-  private meetings: Map<string, Meeting> = new Map();
-  private currentMeetingSpace: meet_v2.Schema$Space | null = null;
-  
-  get capabilityDescription(): string {
-    return "Google Meet API service for managing meetings, participants, and artifacts";
-  }
-  
+  private authService: GoogleAuthService | null = null;
+  private spacesClient: SpacesServiceClient | null = null;
+  private conferenceClient: ConferenceRecordsServiceClient | null = null;
+  private currentMeeting: Meeting | null = null;
+
   constructor(runtime: IAgentRuntime) {
     super(runtime);
-    this.authService = runtime.getService("google-auth") as GoogleAuthService;
-    
-    if (!this.authService) {
-      throw new Error("GoogleAuthService not found. Make sure it's registered before GoogleMeetAPIService");
-    }
-    
-    this.meetClient = google.meet({ 
-      version: 'v2',
-      auth: this.authService.getOAuth2Client()
-    });
   }
 
   static async start(runtime: IAgentRuntime): Promise<Service> {
@@ -36,114 +19,151 @@ export class GoogleMeetAPIService extends Service {
     await service.initialize();
     return service;
   }
-  
+
   async initialize(): Promise<void> {
-    if (!this.authService.isAuthenticated()) {
-      logger.warn("Google Auth Service not authenticated. Please authenticate before using Meet API.");
+    this.authService = this.runtime.getService("google-auth") as GoogleAuthService;
+    if (!this.authService) {
+      throw new Error("Google Auth Service not found");
     }
+
+    // Initialize clients with auth
+    const authClient = this.authService.getOAuth2Client();
+    // @google-apps/meet expects auth to be passed in options
+    const auth = authClient as any;
+    this.spacesClient = new SpacesServiceClient({ auth });
+    this.conferenceClient = new ConferenceRecordsServiceClient({ auth });
   }
-  
-  async createMeeting(config?: {
-    accessType?: 'OPEN' | 'TRUSTED' | 'RESTRICTED';
+
+  get capabilityDescription(): string {
+    return "Google Meet API integration for creating and managing meetings";
+  }
+
+  async createMeeting(params?: {
+    title?: string;
+    accessType?: string;
+    duration?: number;
   }): Promise<Meeting> {
+    if (!this.spacesClient) {
+      throw new Error("Meet API client not initialized");
+    }
+
     try {
-      const response = await this.meetClient.spaces.create({
-        requestBody: {
-          config: {
-            accessType: config?.accessType || 'OPEN',
-            entryPointAccess: 'ALL'
-          }
+      const request: any = {};
+      
+      // Set meeting configuration
+      if (params?.accessType) {
+        switch (params.accessType.toUpperCase()) {
+          case 'TRUSTED':
+            request.accessType = 'TRUSTED';
+            break;
+          case 'RESTRICTED':
+            request.accessType = 'RESTRICTED';
+            break;
+          default:
+            request.accessType = 'OPEN';
         }
-      });
-      
-      const space = response.data;
-      if (!space.name || !space.meetingUri || !space.meetingCode) {
-        throw new Error("Invalid meeting space response");
       }
+
+      const [space] = await this.spacesClient.createSpace({ space: request });
       
-      const meeting: Meeting = {
+      if (!space || !space.name) {
+        throw new Error("Failed to create meeting space");
+      }
+
+      // Extract meeting code from the space name
+      const meetingCode = space.meetingCode || '';
+      
+      this.currentMeeting = {
         id: space.name,
-        meetingCode: space.meetingCode,
-        meetingUri: space.meetingUri,
-        status: MeetingStatus.ACTIVE,
+        meetingCode: meetingCode,
+        meetingUri: space.meetingUri || `https://meet.google.com/${meetingCode}`,
+        title: params?.title || "Meeting",
         startTime: new Date(),
+        status: MeetingStatus.WAITING,
         participants: [],
         transcripts: []
       };
-      
-      this.meetings.set(meeting.id, meeting);
-      this.currentMeetingSpace = space;
-      
-      logger.info(`Created meeting: ${meeting.meetingUri}`);
-      return meeting;
+
+      return this.currentMeeting;
     } catch (error) {
       logger.error("Failed to create meeting:", error);
       throw error;
     }
   }
-  
-  async getMeetingSpace(spaceName: string): Promise<meet_v2.Schema$Space> {
+
+  async getMeetingSpace(spaceName: string): Promise<any> {
+    if (!this.spacesClient) {
+      throw new Error("Meet API client not initialized");
+    }
+
     try {
-      const response = await this.meetClient.spaces.get({
-        name: spaceName
-      });
-      
-      return response.data;
+      const [space] = await this.spacesClient.getSpace({ name: spaceName });
+      return space;
     } catch (error) {
       logger.error(`Failed to get meeting space ${spaceName}:`, error);
       throw error;
     }
   }
-  
-  async getConference(conferenceName: string): Promise<meet_v2.Schema$ConferenceRecord> {
+
+  async getConference(conferenceRecordName: string): Promise<any> {
+    if (!this.conferenceClient) {
+      throw new Error("Meet API client not initialized");
+    }
+
     try {
-      const response = await this.meetClient.conferenceRecords.get({
-        name: conferenceName
+      const [conference] = await this.conferenceClient.getConferenceRecord({
+        name: conferenceRecordName
       });
-      
-      return response.data;
+      return conference;
     } catch (error) {
-      logger.error(`Failed to get conference ${conferenceName}:`, error);
+      logger.error(`Failed to get conference ${conferenceRecordName}:`, error);
       throw error;
     }
   }
-  
+
   async listParticipants(conferenceRecordName: string): Promise<Participant[]> {
+    if (!this.conferenceClient) {
+      throw new Error("Meet API client not initialized");
+    }
+
     try {
-      const response = await this.meetClient.conferenceRecords.participants.list({
+      const participants: Participant[] = [];
+      
+      // Use the async iterator to list participants
+      const iterable = this.conferenceClient.listParticipantsAsync({
         parent: conferenceRecordName,
         pageSize: 100
       });
-      
-      const participants: Participant[] = [];
-      
-      if (response.data.participants) {
-        for (const p of response.data.participants) {
-          if (p.name) {
-            // Handle different participant types based on the API structure
-            let displayName = "Unknown";
-            
-            // Check if it's a signedinUser
-            if (p.signedinUser) {
-              displayName = p.signedinUser.displayName || p.signedinUser.user || "Signed-in User";
-            }
-            // Check if it's an anonymousUser
-            else if (p.anonymousUser) {
-              displayName = p.anonymousUser.displayName || "Anonymous User";
-            }
-            // Check if it's a phoneUser
-            else if (p.phoneUser) {
-              displayName = p.phoneUser.displayName || "Phone User";
-            }
-            
-            participants.push({
-              id: p.name,
-              name: displayName,
-              joinTime: p.earliestStartTime ? new Date(p.earliestStartTime) : new Date(),
-              leaveTime: p.latestEndTime ? new Date(p.latestEndTime) : undefined,
-              isActive: !p.latestEndTime
-            });
+
+      for await (const participant of iterable) {
+        if (participant.name) {
+          // Handle different participant types based on the API structure
+          let displayName = "Unknown";
+          
+          // Check if it's a signedinUser
+          if (participant.signedinUser) {
+            displayName = participant.signedinUser.displayName || participant.signedinUser.user || "Signed-in User";
           }
+          // Check if it's an anonymousUser
+          else if (participant.anonymousUser) {
+            displayName = participant.anonymousUser.displayName || "Anonymous User";
+          }
+          // Check if it's a phoneUser
+          else if (participant.phoneUser) {
+            displayName = participant.phoneUser.displayName || "Phone User";
+          }
+          
+          participants.push({
+            id: participant.name,
+            name: displayName,
+            joinTime: participant.earliestStartTime ? 
+              new Date((participant.earliestStartTime as any).seconds * 1000) : 
+              new Date(),
+            leaveTime: participant.latestEndTime ? 
+              new Date((participant.latestEndTime as any).seconds * 1000) : 
+              undefined,
+            isActive: !participant.latestEndTime
+          });
         }
       }
       
@@ -153,97 +173,113 @@ export class GoogleMeetAPIService extends Service {
       throw error;
     }
   }
-  
+
   async getTranscript(transcriptName: string): Promise<string> {
+    if (!this.conferenceClient) {
+      throw new Error("Meet API client not initialized");
+    }
+
     try {
-      const response = await this.meetClient.conferenceRecords.transcripts.get({
+      const [transcript] = await this.conferenceClient.getTranscript({
         name: transcriptName
       });
       
-      if (!response.data.name) {
+      if (!transcript) {
         throw new Error("Invalid transcript response");
       }
-      
+
       // Get transcript entries
-      const entriesResponse = await this.meetClient.conferenceRecords.transcripts.entries.list({
-        parent: response.data.name,
-        pageSize: 1000
-      });
-      
       let fullTranscript = "";
-      if (entriesResponse.data.transcriptEntries) {
-        for (const entry of entriesResponse.data.transcriptEntries) {
-          const speaker = entry.participant || "Unknown";
-          const text = entry.text || "";
-          fullTranscript += `${speaker}: ${text}\n`;
-        }
+      const iterable = this.conferenceClient.listTranscriptEntriesAsync({
+        parent: transcriptName
+      });
+
+      for await (const entry of iterable) {
+        const speaker = entry.participant || "Unknown";
+        const text = entry.text || "";
+        fullTranscript += `${speaker}: ${text}\n`;
       }
-      
+
       return fullTranscript;
     } catch (error) {
       logger.error(`Failed to get transcript ${transcriptName}:`, error);
       throw error;
     }
   }
-  
-  async listRecordings(conferenceRecordName: string): Promise<meet_v2.Schema$Recording[]> {
+
+  async listRecordings(conferenceRecordName: string): Promise<any[]> {
+    if (!this.conferenceClient) {
+      throw new Error("Meet API client not initialized");
+    }
+
     try {
-      const response = await this.meetClient.conferenceRecords.recordings.list({
+      const recordings: any[] = [];
+      const iterable = this.conferenceClient.listRecordingsAsync({
         parent: conferenceRecordName
       });
-      
-      return response.data.recordings || [];
+
+      for await (const recording of iterable) {
+        recordings.push(recording);
+      }
+
+      return recordings;
     } catch (error) {
       logger.error(`Failed to list recordings for ${conferenceRecordName}:`, error);
       throw error;
     }
   }
-  
+
   async getRecordingUrl(recordingName: string): Promise<string | null> {
+    if (!this.conferenceClient) {
+      throw new Error("Meet API client not initialized");
+    }
+
     try {
-      const response = await this.meetClient.conferenceRecords.recordings.get({
+      const [recording] = await this.conferenceClient.getRecording({
         name: recordingName
       });
       
-      return response.data.driveDestination?.file || null;
+      return recording?.driveDestination?.exportUri || null;
     } catch (error) {
       logger.error(`Failed to get recording ${recordingName}:`, error);
-      throw error;
+      return null;
     }
   }
-  
+
   async endMeeting(spaceName: string): Promise<void> {
+    if (!this.spacesClient) {
+      throw new Error("Meet API client not initialized");
+    }
+
     try {
-      await this.meetClient.spaces.endActiveConference({
+      await this.spacesClient.endActiveConference({
         name: spaceName
       });
       
-      const meeting = Array.from(this.meetings.values()).find(m => m.id === spaceName);
-      if (meeting) {
-        meeting.status = MeetingStatus.ENDED;
-        meeting.endTime = new Date();
+      if (this.currentMeeting?.id === spaceName) {
+        this.currentMeeting.status = MeetingStatus.ENDED;
+        this.currentMeeting.endTime = new Date();
       }
-      
-      logger.info(`Ended meeting: ${spaceName}`);
     } catch (error) {
       logger.error(`Failed to end meeting ${spaceName}:`, error);
       throw error;
     }
   }
-  
+
   getCurrentMeeting(): Meeting | null {
-    return this.currentMeetingSpace ? 
-      this.meetings.get(this.currentMeetingSpace.name!) || null : 
-      null;
+    return this.currentMeeting;
   }
-  
+
   getMeeting(meetingId: string): Meeting | null {
-    return this.meetings.get(meetingId) || null;
+    if (this.currentMeeting?.id === meetingId) {
+      return this.currentMeeting;
+    }
+    return null;
   }
-  
+
   async stop(): Promise<void> {
-    logger.info("Stopping Google Meet API Service");
-    this.meetings.clear();
-    this.currentMeetingSpace = null;
+    this.currentMeeting = null;
+    this.spacesClient = null;
+    this.conferenceClient = null;
   }
 } 
